@@ -31,7 +31,8 @@ var slotData = {}; // { slot: { courseNo, name, venue } }
 var overrideData = {}; // { "Monday-A": { courseNo, name, venue } }
 var MtechData = {}
 
-ACADS_COURSES = {}; // Add courses after pulling from file
+let ACADS_COURSES = {}; // Add courses after pulling from file
+let CURRENT_SEMESTER = "";
 
 function printTimetable() {
     captureFullTimetable((wrapper) => {
@@ -379,49 +380,123 @@ function parseInputs() {
     readMtechInputs();
 }
 
-async function fetch_courses_json() {
-    data = await fetch('./courses.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .catch(error => console.error('Failed to course data:', error));
+async function initializeSemesterSelector() {
+    const selector = document.getElementById("semesterSelect");
+    // const heading = document.getElementById("semesterHeading");
 
-    return data
+    selector.innerHTML = "";
+
+    Object.keys(SEMESTER_DATA_FILES).forEach((semester) => {
+        const option = document.createElement("option");
+        option.value = semester;
+        option.textContent = semester;
+        selector.appendChild(option);
+    });
+
+    const defaultSemester = Object.keys(SEMESTER_DATA_FILES)[0];
+
+    CURRENT_SEMESTER =
+        localStorage.getItem("selectedSemester") || defaultSemester;
+
+    if (!SEMESTER_DATA_FILES[CURRENT_SEMESTER]) {
+        CURRENT_SEMESTER = defaultSemester;
+    }
+
+    selector.value = CURRENT_SEMESTER;
+    // heading.innerText = `Semester: ${CURRENT_SEMESTER}`;
+
+    ACADS_COURSES = await fetch_courses_json(CURRENT_SEMESTER);
+
+    selector.addEventListener("change", async function () {
+        CURRENT_SEMESTER = this.value;
+
+        localStorage.setItem("selectedSemester", CURRENT_SEMESTER);
+
+        // heading.innerText = `Semester: ${CURRENT_SEMESTER}`;
+
+        ACADS_COURSES = await fetch_courses_json(CURRENT_SEMESTER);
+    });
+}
+
+async function fetch_courses_json(semester) {
+    if (!semester) return {};
+
+    const filePath = SEMESTER_DATA_FILES[semester];
+
+    if (!filePath) {
+        console.error(`No JSON mapped for semester: ${semester}`);
+        return {};
+    }
+
+    try {
+        const response = await fetch(filePath);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Failed to fetch semester course data:", error);
+        return {};
+    }
 }
 
 function getCourseDataAcads(courseNo) {
+    const normalizedCourseNo = courseNo.toUpperCase();
 
-    let course = {
-        slot: "Slot",
+    const defaultCourse = {
+        slot: "",
         name: "",
-        venue: ""
-    }
-    course = Object.assign(course, ACADS_COURSES[courseNo]);
+        venue: "",
+        courseNo: normalizedCourseNo
+    };
 
-    course.courseNo = courseNo.toUpperCase();
-    return course
+    if (!ACADS_COURSES[normalizedCourseNo]) {
+        return defaultCourse;
+    }
+
+    return {
+        ...defaultCourse,
+        ...ACADS_COURSES[normalizedCourseNo]
+    };
 }
 
 function populateData() {
-    slotData = {}
-    overrideData = {}
-    document.querySelectorAll("#slotInputs .tt-data").forEach(row => {
-        courseNo = row.getElementsByClassName("row_course_number")[0].value.toUpperCase();
-        if (courseNo) {
-            course_data = getCourseDataAcads(courseNo);
-            elements = { slot: row.getElementsByClassName("row_slot")[0], courseNo: row.getElementsByClassName("row_course_number")[0], name: row.getElementsByClassName("row_course_name")[0], venue: row.getElementsByClassName("row_venue")[0] };
-            if (elements.slot.value == "Slot") {
-                elements.slot.value = "";
-            }
-            for (let [key, element] of Object.entries(elements)) {
-                if (!element.value) {
-                    element.value = course_data[key];
-                }
-            }
+    document.querySelectorAll("#slotInputs .tt-data").forEach((row) => {
+        const courseNoInput =
+            row.getElementsByClassName("row_course_number")[0];
+
+        const courseNo = courseNoInput.value.trim().toUpperCase();
+
+        if (!courseNo) return;
+
+        const courseData = getCourseDataAcads(courseNo);
+
+        const elements = {
+            slot: row.getElementsByClassName("row_slot")[0],
+            courseNo: courseNoInput,
+            name: row.getElementsByClassName("row_course_name")[0],
+            venue: row.getElementsByClassName("row_venue")[0]
+        };
+
+        if (elements.slot.value === "Slot") {
+            elements.slot.value = "";
         }
+
+        if (!elements.slot.value && courseData.slot) {
+            elements.slot.value = courseData.slot;
+        }
+
+        if (!elements.name.value && courseData.name) {
+            elements.name.value = courseData.name;
+        }
+
+        if (!elements.venue.value && courseData.venue) {
+            elements.venue.value = courseData.venue;
+        }
+
+        elements.courseNo.value = courseNo;
     });
 }
 
@@ -633,7 +708,7 @@ function setupDarkMode() {
 
 document.addEventListener("DOMContentLoaded", async function () {
     load_from_cookie();
-    ACADS_COURSES = await fetch_courses_json();
+    await initializeSemesterSelector();
     setupDarkMode();
 });
 

@@ -71,6 +71,69 @@
     }
 
     /* =====================
+    TITLE + SEMESTER ROW
+    ===================== */
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+        text-align: left;
+    }
+
+    /* keep title text from stretching weirdly */
+    .page-title span {
+        flex: 1;
+    }
+
+    /* =====================
+    SEMESTER SELECTOR
+    ===================== */
+
+    .semester-selector {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-shrink: 0;
+        gap: 0.6rem;
+        padding: 0;
+        background: transparent;
+    }
+
+    .semester-selector select {
+        min-width: 120px;
+        height: 38px;
+        padding: 0.45rem 0.75rem;
+        border-radius: 8px;
+        border: 0.5px solid #ccc;
+        font-size: 0.9rem;
+        background: #fff;
+    }
+
+    /* =====================
+    MOBILE
+    ===================== */
+
+    @media (max-width: 768px) {
+        .page-title {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+
+        .page-title span {
+            flex: unset;
+        }
+
+        .semester-selector {
+            justify-content: center;
+        }
+    }
+
+    /* =====================
     FORM SECTIONS
     ===================== */
     .form-section {
@@ -449,6 +512,15 @@
         body:not(.light-mode) .gray_light   { background: #2a2a2a; }
     }
 
+    body:not(.light-mode) .semester-selector select {
+        background: #252525;
+        color: #e5e5e5;
+        border-color: #2a2a2a;
+    }
+
+    body:not(.light-mode) .semester-selector label {
+        color: #e5e5e5;
+    }
 
     /* =====================
    THEME TOGGLE

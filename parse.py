@@ -1,18 +1,18 @@
 import json
 
 data_dict = {}
-with open("./courses.tsv", "r") as file:
+with open("./aug-nov-26.tsv", "r") as file:
     file.readline()
     for line in file.readlines():
         data = line.split("\t")
         data = [item.strip() for item in data]
 
-        course_num = data[0]
+        course_num = data[3]
         if len(course_num) > 6:
             course_num = course_num[:6]
         
         name = data[4]
-        slot = data[2]
+        slot = data[1]
         venue = data[15]
 
         if slot[-1:] == "1":
