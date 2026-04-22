@@ -299,6 +299,14 @@
     }
 
     /* =====================
+    FOOTER
+    ===================== */
+
+    .ack-footer {
+        font-family: 'Oxanium', 'Inter', sans-serif;
+    }
+
+    /* =====================
     TIMETABLE WRAPPER
     ===================== */
     .timetable {
